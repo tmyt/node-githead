@@ -33,12 +33,12 @@ GitHead.prototype.readRef = function(ref){
 }
 
 module.exports = function(dir, branch){
-//  try{
+  try{
     var head = new GitHead(dir);
     var ref = branch === undefined ? head.getHeadRef() : head.getBranchRef(branch);
     if(ref === undefined) return "";
     return head.readRef(ref);
-//  }catch(e){
+  }catch(e){
     return undefined;
-//  }
+  }
 }
