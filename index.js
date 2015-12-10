@@ -1,29 +1,44 @@
 var fs = require('fs')
   , path = require('path');
 
-function getHeadRef(dir){
-  var head = path.join(dir, '.git', 'HEAD');
+function GitHead(dir){
+  this.baseDir = dir;
+  try{
+    fs.statSync(path.join(dir, '.git'));
+    this.isBareRepo = false;
+  }catch(err){
+    this.isBareRepo = true;
+  }
+}
+
+GitHead.prototype.toRepoPath = function(path){
+  return (this.isBareRepo ? '' : '.git/') + path;
+}
+
+GitHead.prototype.getHeadRef = function(){
+  var head = path.join(this.baseDir, this.toRepoPath('HEAD'));
   var content = fs.readFileSync(head).toString();
   return content.split(':')[1].trim();
 }
 
-function getBranchRef(dir, branch){
-  var head = path.join(dir, '.git/refs/heads', branch);
+GitHead.prototype.getBranchRef = function(branch){
+  var head = path.join(this.baseDir, this.toRepoPath('refs/heads'), branch);
   return fs.existsSync(head) ? 'refs/heads/' + branch : undefined;
 }
 
-function readRef(dir, ref){
-  var head = path.join(dir, '.git', ref);
+GitHead.prototype.readRef = function(ref){
+  var head = path.join(this.baseDir, this.toRepoPath(ref));
   var content = fs.readFileSync(head).toString();
   return content.substr(0, 8);
 }
 
 module.exports = function(dir, branch){
-  try{
-    var ref = branch === undefined ? getHeadRef(dir) : getBranchRef(dir, branch);
+//  try{
+    var head = new GitHead(dir);
+    var ref = branch === undefined ? head.getHeadRef() : head.getBranchRef(branch);
     if(ref === undefined) return "";
-    return readRef(dir, ref);
-  }catch(e){
+    return head.readRef(ref);
+//  }catch(e){
     return undefined;
-  }
+//  }
 }
